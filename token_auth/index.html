@@ -21,20 +21,6 @@
             </div>
 
             <form id="login-form" action="/api/login" method="post">
-                <input
-                    type="text"
-                    name="login"
-                    id="username-field"
-                    class="login-form-field"
-                    placeholder="Username"
-                />
-                <input
-                    type="password"
-                    name="password"
-                    id="password-field"
-                    class="login-form-field"
-                    placeholder="Password"
-                />
                 <input type="submit" value="Login" id="login-form-submit" />
             </form>
         </main>
@@ -129,42 +115,40 @@
     </style>
 
     <script>
-        const token = localStorage.getItem('access_token');
-
-        if (token) {
-            axios
-                .get('/get-user-info', {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                    },
-                })
-                .then((response) => {
-                    const { username } = response.data;
-
-                    if (username) {
-                        const mainHolder =
-                            document.getElementById('main-holder');
-                        const loginHeader =
-                            document.getElementById('login-header');
-
-                        loginForm.remove();
-                        loginErrorMsg.remove();
-                        loginHeader.remove();
-
-                        mainHolder.append(`Hello ${username}`);
-                        logoutLink.style.opacity = 1;
-                    }
-                })
-                .catch(() => {
-                    localStorage.removeItem('access_token');
-                    location.reload();
-                });
-        }
-
-        const loginForm = document.getElementById('login-form');
         const loginButton = document.getElementById('login-form-submit');
         const loginErrorMsg = document.getElementById('login-error-msg');
         const logoutLink = document.getElementById('logout');
+
+        const token = localStorage.getItem('access_token');
+
+        const url = new URL(location.href);
+        const code = new URLSearchParams(url.search).get('code');
+
+        if (!token && code) {
+            axios({
+                method: 'post',
+                url: 'https://kpi.eu.auth0.com/oauth/token',
+                data: {
+                    audience: 'https://kpi.eu.auth0.com/api/v2/',
+                    realm: 'Username-Password-Authentication',
+                    client_id: 'JIvCO5c2IBHlAe2patn6l6q5H35qxti0',
+                    client_secret:
+                        'ZRF8Op0tWM36p1_hxXTU-B0K_Gq_-eAVtlrQpY24CasYiDmcXBhNS6IJMNcz1EgB',
+                    redirect_uri: 'http://localhost:3000',
+                    grant_type: 'authorization_code',
+                    code: code,
+                },
+            })
+                .then((response) => {
+                    localStorage.setItem(
+                        'access_token',
+                        response.data.access_token
+                    );
+                })
+                .catch((response) => {
+                    loginErrorMsg.style.opacity = 1;
+                });
+        }
 
         logoutLink.addEventListener('click', (e) => {
             e.preventDefault();
@@ -174,34 +158,9 @@
 
         loginButton.addEventListener('click', (e) => {
             e.preventDefault();
-            const login = loginForm.login.value;
-            const password = loginForm.password.value;
-
-            axios({
-                method: 'post',
-                url: 'https://kpi.eu.auth0.com/oauth/token',
-                data: {
-                    audience: 'https://kpi.eu.auth0.com/api/v2/',
-                    grant_type:
-                        'http://auth0.com/oauth/grant-type/password-realm',
-                    username: login,
-                    password,
-                    realm: 'Username-Password-Authentication',
-                    client_id: 'JIvCO5c2IBHlAe2patn6l6q5H35qxti0',
-                    client_secret:
-                        'ZRF8Op0tWM36p1_hxXTU-B0K_Gq_-eAVtlrQpY24CasYiDmcXBhNS6IJMNcz1EgB',
-                },
-            })
-                .then((response) => {
-                    localStorage.setItem(
-                        'access_token',
-                        response.data.access_token
-                    );
-                    location.reload();
-                })
-                .catch((response) => {
-                    loginErrorMsg.style.opacity = 1;
-                });
+            location.replace(
+                'https://kpi.eu.auth0.com/authorize?client_id=JIvCO5c2IBHlAe2patn6l6q5H35qxti0&redirect_uri=http://localhost:3000&response_type=code&response_mode=query'
+            );
         });
     </script>
 </html>
