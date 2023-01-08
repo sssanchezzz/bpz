@@ -167,15 +167,23 @@
 
             axios({
                 method: 'post',
-                url: '/api/login',
+                url: 'https://kpi.eu.auth0.com/oauth/token',
                 data: {
-                    login,
-                    password
-                }
+                    audience:
+                        'https://kpi.eu.auth0.com/api/v2/',
+                    grant_type:
+                        'http://auth0.com/oauth/grant-type/password-realm',
+                    username: login,
+                    password,
+                    realm: 'Username-Password-Authentication',
+                    client_id: 'JIvCO5c2IBHlAe2patn6l6q5H35qxti0',
+                    client_secret:
+                        'ZRF8Op0tWM36p1_hxXTU-B0K_Gq_-eAVtlrQpY24CasYiDmcXBhNS6IJMNcz1EgB',
+                },
             }).then((response) => {
                 const { username } =  response.data;
-                sessionStorage.setItem('session', JSON.stringify(response.data));
-                location.reload();
+                localStorage.setItem('access_token', response.data.access_token);
+                // location.reload(); 
             }).catch((response) => {
                 loginErrorMsg.style.opacity = 1;
             });
